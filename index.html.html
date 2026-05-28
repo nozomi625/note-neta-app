@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="noteネタ帳">
+<meta name="theme-color" content="#12122a">
+<title>noteネタ帳</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #12122a;
+    --bg2: #1c1c38;
+    --bg3: #22223f;
+    --card-bg: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.10);
+    --card-hover: rgba(255,255,255,0.09);
+    --text-primary: #e8e6f0;
+    --text-secondary: #a89fc0;
+    --text-muted: #6b6490;
+    --accent1: #c9bfee;   /* ラベンダー */
+    --accent2: #f0e6c8;   /* クリーム */
+    --accent3: #b8d8e8;   /* ミスト */
+    --t1: #d4c5f0;
+    --t2: #b8e0d4;
+    --t3: #f0d4b8;
+    --t1-bg: rgba(180,150,230,0.12);
+    --t2-bg: rgba(140,210,190,0.12);
+    --t3-bg: rgba(230,180,120,0.12);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Noto Serif JP', serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* 星空背景 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 42% 8%,  rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 15%, rgba(255,255,255,0.30) 0%, transparent 100%),
+      radial-gradient(1px 1px at 88% 30%, rgba(255,255,255,0.20) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5%  55%, rgba(255,255,255,0.20) 0%, transparent 100%),
+      radial-gradient(1px 1px at 95% 65%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,0.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 90%, rgba(255,255,255,0.20) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 80% 75%, rgba(255,255,255,0.30) 0%, transparent 100%),
+      radial-gradient(1px 1px at 22% 45%, rgba(255,255,255,0.18) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ふんわりグロー */
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 340px;
+    height: 340px;
+    background: radial-gradient(circle, rgba(150,130,210,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 0 120px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ヘッダー */
+  .header {
+    padding: 52px 24px 20px;
+    text-align: center;
+  }
+  .header-moon {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+    opacity: 0.85;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+  .header p {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* テーマ選択 */
+  .theme-section {
+    padding: 0 20px 8px;
+  }
+  .theme-label {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+  .theme-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .theme-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .theme-card:active { transform: scale(0.97); }
+  .theme-card.all-card {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 10px 14px;
+  }
+  .theme-card.active { border-color: rgba(255,255,255,0.25); }
+  .theme-card.active.all-card { background: rgba(255,255,255,0.09); }
+  .theme-card.active.t1 { background: var(--t1-bg); border-color: rgba(180,150,230,0.30); }
+  .theme-card.active.t2 { background: var(--t2-bg); border-color: rgba(140,210,190,0.30); }
+  .theme-card.active.t3 { background: var(--t3-bg); border-color: rgba(230,180,120,0.30); }
+  .theme-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+    margin-bottom: 1px;
+  }
+  .t1 .theme-dot { background: var(--t1); }
+  .t2 .theme-dot { background: var(--t2); }
+  .t3 .theme-dot { background: var(--t3); }
+  .theme-name {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .theme-card.active .theme-name { color: var(--text-primary); }
+  .theme-sub {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    color: var(--text-muted);
+  }
+  .all-card .theme-name { font-size: 12px; display: inline; }
+
+  /* ボタン */
+  .btn-area {
+    padding: 20px 20px 4px;
+  }
+  .btn-shuffle {
+    width: 100%;
+    background: rgba(180,160,230,0.15);
+    border: 1px solid rgba(180,160,230,0.30);
+    border-radius: var(--radius);
+    padding: 18px;
+    color: var(--accent1);
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .btn-shuffle:active {
+    transform: scale(0.98);
+    background: rgba(180,160,230,0.22);
+  }
+  .btn-icon { font-size: 18px; }
+
+  /* 結果カード */
+  .result-area {
+    padding: 16px 20px 0;
+    flex: 1;
+  }
+  .result-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    animation: fadeUp 0.45s ease forwards;
+    opacity: 0;
+  }
+  .result-card.t1 { border-color: rgba(180,150,230,0.20); }
+  .result-card.t2 { border-color: rgba(140,210,190,0.20); }
+  .result-card.t3 { border-color: rgba(230,180,120,0.20); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-theme-badge {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+  .t1 .result-theme-badge { background: var(--t1-bg); color: var(--t1); }
+  .t2 .result-theme-badge { background: var(--t2-bg); color: var(--t2); }
+  .t3 .result-theme-badge { background: var(--t3-bg); color: var(--t3); }
+
+  .result-title {
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--accent2);
+    line-height: 1.65;
+    margin-bottom: 20px;
+    letter-spacing: 0.03em;
+  }
+
+  .result-divider {
+    height: 1px;
+    background: var(--card-border);
+    margin-bottom: 20px;
+  }
+
+  .result-intro {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.9;
+    margin-bottom: 22px;
+    letter-spacing: 0.02em;
+  }
+
+  .result-section-label {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .result-points {
+    list-style: none;
+    margin-bottom: 22px;
+  }
+  .result-points li {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    padding: 7px 0 7px 16px;
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .result-points li:last-child { border-bottom: none; }
+  .result-points li::before {
+    content: '·';
+    position: absolute;
+    left: 4px;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .result-question {
+    background: rgba(255,255,255,0.04);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--accent1);
+    line-height: 1.8;
+    letter-spacing: 0.03em;
+  }
+  .result-question::before {
+    content: '💬 ';
+    opacity: 0.7;
+  }
+
+  /* 空状態 */
+  .empty-state {
+    text-align: center;
+    padding: 56px 24px;
+    color: var(--text-muted);
+  }
+  .empty-moon { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
+  .empty-text {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 2;
+    letter-spacing: 0.05em;
+  }
+
+  /* カウンター */
+  .counter {
+    text-align: center;
+    padding: 14px 0 0;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <span class="header-moon">🌙</span>
+    <h1>noteネタ帳</h1>
+    <p>今夜、書くネタを見つける</p>
+  </header>
+
+  <section class="theme-section">
+    <p class="theme-label">— テーマを選ぶ —</p>
+    <div class="theme-cards">
+      <div class="theme-card all-card active" data-theme="all" onclick="selectTheme(this)">
+        <span class="theme-name">すべてのテーマ</span>
+      </div>
+      <div class="theme-card t1" data-theme="1" onclick="selectTheme(this)">
+        <span class="theme-dot"></span>
+        <span class="theme-name">完璧じゃない人のリアル</span>
+        <span class="theme-sub">16本</span>
+      </div>
+      <div class="theme-card t2" data-theme="2" onclick="selectTheme(this)">
+        <span class="theme-dot"></span>
+        <span class="theme-name">余白のある共感</span>
+        <span class="theme-sub">16本</span>
+      </div>
+      <div class="theme-card t3" data-theme="3" onclick="selectTheme(this)">
+        <span class="theme-dot"></span>
+        <span class="theme-name">静かな強さで夜に読む言葉</span>
+        <span class="theme-sub">16本</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="btn-area">
+    <button class="btn-shuffle" onclick="shuffle()">
+      <span class="btn-icon">✦</span>
+      <span>ネタをひとつ、引いてみる</span>
+    </button>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <div class="empty-state">
+      <div class="empty-moon">🌙</div>
+      <p class="empty-text">ボタンを押すと<br>記事ネタがひとつ届きます</p>
+    </div>
+  </div>
+
+  <p class="counter" id="counter"></p>
+
+</div>
+
+<script>
+const DATA = [
+  {theme:1,label:"テーマ1",title:"「また先延ばしにした」そんな夜",intro:"やるべきことを後回しにした日の夜、自分を責めながらスマホを見ている——その感覚に名前をつけてあげる記事。",points:["先延ばしが生まれる心理的な背景（完璧主義・疲労・判断疲れ）","責める気持ちより「なぜできなかったか」を観察する視点","翌朝にリセットするための小さな行動ひとつ"],q:"あなたが一番先延ばしにしがちなのはどんなことですか？"},
+  {theme:1,label:"テーマ1",title:"苦手な人が頭から離れない日",intro:"嫌いだと思いたくないのに、気づくとその人のことを考えている——そんな自分の正直な気持ちを受け取る話。",points:["「苦手」と「嫌い」の微妙な違いと正直な感情の言語化","頭から離れない理由（鏡効果・未解決の感情）","距離を取ることへの罪悪感を手放すヒント"],q:"苦手な人との距離感、どうやって保っていますか？"},
+  {theme:1,label:"テーマ1",title:"褒められても素直に喜べない私",intro:"「ありがとうございます」と言いながら、心の中では「大したことないのに」と打ち消している——その癖の話。",points:["承認を受け取れない背景にある自己評価の歪み","「謙遜」と「自己否定」の境界線はどこにあるか","小さな褒め言葉を受け取る練習の始め方"],q:"褒められたとき、素直に受け取れていると思いますか？"},
+  {theme:1,label:"テーマ1",title:"感情的になってしまった翌日",intro:"怒鳴ったわけじゃないけど、昨日の自分の言い方が気になってる——そんな後悔を抱えた朝のための文章。",points:["感情的になること＝悪いことではないという再定義","事後の後悔が生まれるメカニズムと自己批判の罠","相手への謝罪より先に自分への声掛けをする理由"],q:"感情的になったあと、どうやって自分を落ち着かせていますか？"},
+  {theme:1,label:"テーマ1",title:"やる気がないのに忙しい不思議",intro:"何かをしているのに達成感がない。疲れているのにやり残した感がある——そのちぐはぐな感覚の正体を探る。",points:["「疲弊型の忙しさ」と「充実型の忙しさ」の違い","タスクをこなすことと意味を感じることのズレ","一日の中に「自分が選んだ時間」をどう作るか"],q:"今日一日、自分が本当にやりたくてやったことはありましたか？"},
+  {theme:1,label:"テーマ1",title:"人と比べてしまう自分が嫌い",intro:"比べなければいいとわかっている。でも、比べてしまう。その「わかってるのにできない」という葛藤への言葉。",points:["比較は本能であり「意志が弱い」証拠ではないこと","SNSが比較を加速させる構造的な仕組み","比べる対象を「過去の自分」に切り替えるコツ"],q:"比べてしまう相手は、どんな人が多いですか？"},
+  {theme:1,label:"テーマ1",title:"謝りすぎて疲れてしまう人へ",intro:"悪くないのに「すみません」と言っている、気づいたらその言葉が口癖になっていた——そんな人への静かなエール。",points:["過剰な謝罪の背景にある「嫌われたくない」心理","「すみません」を「ありがとう」に替える言葉の力","謝罪の量と自己肯定感の関係性"],q:"「すみません」と「ありがとう」、どちらをよく言いますか？"},
+  {theme:1,label:"テーマ1",title:"心が折れかけた日の乗り越え方",intro:"ポジティブになれない日に「頑張れ」とは言いたくない——折れかけた心をそっと支えるための、等身大の話。",points:["「折れかけ」は危険信号ではなく疲弊のサインであること","限界に気づくための自分なりのバロメーター","完全回復より「60%」で動くことを許す発想"],q:"心が折れかけたとき、自分を立て直すために何をしますか？"},
+  {theme:1,label:"テーマ1",title:"「普通に生きる」が難しい日",intro:"特別なことは何もない、でもなぜかしんどい——その「普通の重さ」に寄り添うための記事。",points:["「普通」という基準がいかに人を追い詰めるか","何でもない日のしんどさを軽く見なくていい理由","今日一日をどう意味づけするか、小さな問いかけ"],q:"「普通に生きること」が一番しんどいと感じる瞬間はどんなときですか？"},
+  {theme:1,label:"テーマ1",title:"完璧な親を演じることに疲れた",intro:"子どもの前でいつも穏やかでいられる親なんていない——そのプレッシャーを正直に語る、親のためのリアルな文章。",points:["「良い親」イメージが生み出す自己嫌悪のループ","子どもに見せていい「不完全さ」とは何か","自分を責める前に必要な、自分への基本的なケア"],q:"親として、自分に一番厳しくしていることはどんなことですか？"},
+  {theme:1,label:"テーマ1",title:"頑張っているのに認められない",intro:"努力していることは自分が一番知っている。なのに評価されない日が続くとき、どう自分を保てばいいのか。",points:["評価されないことと価値がないことは全く別であること","「見えない努力」を可視化するセルフ記録の意味","外からの承認より先に、内なる承認を育てる方法"],q:"誰かに認められなくてもやり続けられることは何ですか？"},
+  {theme:1,label:"テーマ1",title:"友達が減っていく大人の孤独",intro:"連絡しなくなった友人が増えた。それが寂しいのか、自然なことなのか、もう少しだけ一緒に考えたい。",points:["大人になるにつれて人間関係が変化する理由","「友達が少ない＝問題がある」という思い込みへの問い","今の自分に合った関係の質を考え直すきっかけ"],q:"大人になってから、人間関係で変わったと感じることはありますか？"},
+  {theme:1,label:"テーマ1",title:"やりたいことが見つからない焦り",intro:"何かやりたいことを持っている人がまぶしく見える日——「やりたいことのない私」への、責めない言葉。",points:["やりたいことが見つからないのは疲弊のサインかもしれない","好奇心の火が小さくなる理由と環境との関係","「やりたいこと」より「やりたくないこと」を先に外す発想"],q:"最近、少しだけ気になっていることや興味があることはありますか？"},
+  {theme:1,label:"テーマ1",title:"自分を好きになれない日がある",intro:"自分を好きになることを目標にしているのに、全然なれない——そのもどかしさに正直に向き合う記事。",points:["「自分を好きになる」という目標設定そのものへの疑問","自分を好きになれなくても丁寧に扱うことはできる","自己肯定感より先に「自己尊重感」を育てるという視点"],q:"自分を「好き」じゃなくても大切にできていると感じる瞬間はありますか？"},
+  {theme:1,label:"テーマ1",title:"休んでいるのに休んだ気がしない",intro:"体は休めているはずなのに、気持ちが全然休まっていない——その「休み方がわからない」状態への言葉。",points:["「回復」には身体の休息と精神の休息の両方が必要なこと","スマホを見ながら休もうとする行動のパラドックス","自分にとって本当に「休まる」ことを見つける問い"],q:"あなたにとって、本当に休んだと感じるのはどんな時間ですか？"},
+  {theme:1,label:"テーマ1",title:"「なんとかなる」と信じられない夜",intro:"楽観的になれない自分を弱いと思わないでほしい——不安を抱えながら生きている人への、正直な言葉。",points:["「なんとかなる」が言えない状況の現実を否定しないこと","根拠のない楽観ではなく「小さな実績の積み上げ」という考え方","不安と共存しながら次の一歩を踏み出すための具体的な思考法"],q:"不安を感じながらも、前に進めたと感じた経験はありますか？"},
+
+  {theme:2,label:"テーマ2",title:"ちゃんと聞いてほしかっただけ",intro:"アドバイスが欲しかったんじゃない、ただそこにいてほしかっただけ——「聞く」ことの本質を考えるための記事。",points:["「解決」と「共感」の違いと、どちらを求めているかを確認することの大切さ","アドバイスより先に「それは辛かったね」という一言の重み","聞き上手と話し上手、どちらが難しいか"],q:"話を聞いてもらえたと感じた瞬間はどんなときでしたか？"},
+  {theme:2,label:"テーマ2",title:"「大丈夫」って言えない時もある",intro:"大丈夫じゃないのに大丈夫と言ってしまう——その言葉の裏にある気持ちを、少しだけ一緒に開いてみたい。",points:["「大丈夫」という返事が生まれる社会的プレッシャー","本当のことを言えない場面と言える場面の差はどこにあるか","「大丈夫じゃない」を言える関係のつくり方"],q:"「大丈夫じゃない」と正直に言えた相手はいますか？"},
+  {theme:2,label:"テーマ2",title:"余白のある言葉が心に届く",intro:"ぎっしり詰まったアドバイスより、少し隙間のある言葉の方が、なぜか長く残る——そのわけを考えてみる。",points:["言葉に「余白」があるとはどういうことか","押しつけない共感の言葉の作り方","言わないことで伝わるものの存在"],q:"誰かにかけてもらった言葉で、今でも覚えているものはありますか？"},
+  {theme:2,label:"テーマ2",title:"黙って隣にいてくれた人の話",intro:"何も言わずそこにいてくれた人のことが、何年経ってもあたたかく思い出される——そういう存在の話。",points:["「何もしない」ことがケアになる場面","言葉より存在が力になるときの心理","そういう人になるために必要なことは何か"],q:"あなたの隣にいてくれた人は、どんな存在でしたか？"},
+  {theme:2,label:"テーマ2",title:"共感上手より、共感できる人に",intro:"共感を「うまく」演じることと、本当に感じることは、全く別のことだ——という気づきの記事。",points:["「共感のフリ」と「本物の共感」の違いはどこにあるか","共感しようとしすぎると起きること（共感疲れ・同調圧力）","自分の感情を保ちながら相手に寄り添う方法"],q:"本当に共感できたと感じた瞬間はどんな時でしたか？"},
+  {theme:2,label:"テーマ2",title:"弱さを見せても嫌われなかった日",intro:"弱いところを見せたら離れると思っていた。でも、ちゃんとそこに居続けてくれた人がいた——その話。",points:["弱さを隠すことで生まれる関係の「距離感」","弱さを開示することで関係が深まるメカニズム","どのタイミングで・どこまで開示するかの考え方"],q:"弱さを見せて、逆に関係が深まった経験はありますか？"},
+  {theme:2,label:"テーマ2",title:"「わかる」と言われた時のあたたかさ",intro:"完全にわかってもらえなくても、「わかる」という言葉をかけてもらうだけで、少し楽になれることがある。",points:["「わかる」という言葉が持つ魔法と注意点","共感の言葉が嬉しい理由（孤独感の軽減）","「わかる」と言えない時の代わりになる言葉"],q:"「わかる」と言ってくれた人に、どんな感情を抱きましたか？"},
+  {theme:2,label:"テーマ2",title:"気を遣われすぎると逆に疲れる",intro:"心配してくれているのはわかる、でもその気遣いの重さにどこかで息が詰まる——そんな経験への共感の話。",points:["過剰な気遣いが相手を圧迫するメカニズム","「気を遣う」と「気にかける」の違い","距離感のある優しさとはどういうものか"],q:"気を遣われて、逆に疲れてしまった経験はありますか？"},
+  {theme:2,label:"テーマ2",title:"返事が遅い人を責めないでほしい",intro:"既読スルーではなく、ただ言葉を選んでいるだけかもしれない——そういう人のための、小さな弁明。",points:["返事が遅くなる心理的背景（エネルギー・言語化の時間）","即レスを期待することと関係の質の話","連絡の「量」より「誠実さ」を大切にする関係"],q:"返事が遅くなってしまうのはどんな時ですか？"},
+  {theme:2,label:"テーマ2",title:"誰かの話を最後まで聞けた日",intro:"途中で口を挟まず、相槌だけで最後まで聞けた——それだけで相手の顔が柔らかくなったことがある。",points:["「最後まで聞く」の難しさと練習法","人は話し終えることで何を得るのか","聞く力が関係の質を変えるという実体験"],q:"誰かの話をじっくり聞けたと感じた場面はありますか？"},
+  {theme:2,label:"テーマ2",title:"傷ついたことを言葉にするのが怖い",intro:"傷ついたと言うと大げさに聞こえるかもしれない——そのためらいを抱えている人への、静かな肯定の言葉。",points:["傷ついた気持ちを「大げさ」と自分で打ち消す癖","感情の言語化が怖くなる理由（過去の経験・評価への恐れ）","安心して言葉にできる場所と関係を見つけること"],q:"傷ついたことをちゃんと言えた経験はありますか？"},
+  {theme:2,label:"テーマ2",title:"優しくされると泣きたくなる理由",intro:"怒られたら平気なのに、優しくされると急に涙が出そうになる——あの感覚の正体を一緒に考えてみたい。",points:["緊張が緩んだときに感情が溢れる心理的メカニズム","優しさへの免疫がない状態とはどういうことか","優しくされることを受け入れる練習"],q:"優しくされて、逆に感情が溢れた経験はありますか？"},
+  {theme:2,label:"テーマ2",title:"同調圧力に疲れた話をしたい",intro:"みんなと同じことを言わないといけない空気、感じたことはありませんか——静かにそこから降りるための言葉。",points:["同調圧力が生まれるグループ心理のしくみ","「合わせる」と「同調する」の違い","自分の意見を持ちながらグループに属する方法"],q:"同調圧力を感じたとき、どう対応していますか？"},
+  {theme:2,label:"テーマ2",title:"沈黙が怖くなくなった日",intro:"沈黙を埋めなければと焦っていた。でもある日、何も言わずにいることが安心に変わった——そのきっかけの話。",points:["沈黙恐怖の背景にある「承認欲求」と「不安」","沈黙が「心地よさ」に変わる関係の条件","沈黙の中にある豊かなコミュニケーション"],q:"沈黙が心地よいと感じる相手はいますか？"},
+  {theme:2,label:"テーマ2",title:"「ありがとう」より「いてくれてよかった」",intro:"感謝の言葉はたくさんあるけれど、「存在してくれてよかった」という言葉は全然違う重さを持つ——という話。",points:["存在承認と行動承認の違い","「いてくれてよかった」という言葉が特別な理由","その言葉を誰かに伝えることの勇気と効果"],q:"「いてくれてよかった」と感じた相手はいますか？"},
+  {theme:2,label:"テーマ2",title:"自分に共感できているか、たまに問う",intro:"他人に共感することが得意な人ほど、自分の気持ちを後回しにしていることがある——という静かな気づきの話。",points:["自己共感とは何かという概念の整理","他者共感が強い人が自分を犠牲にしやすい理由","一日5分、自分の気持ちを問いかける習慣"],q:"最近、自分自身の気持ちをゆっくり聞いてあげましたか？"},
+
+  {theme:3,label:"テーマ3",title:"夜だから正直に話せること",intro:"朝の自分には言えないことが、夜の自分にはするりと出てくる——夜にだけ開く正直さについての言葉。",points:["昼と夜で感情の回路が違う理由","夜の孤独が実は「自分と向き合う時間」でもあること","夜の想念を朝の行動に変える方法"],q:"夜だけ正直になれる気持ち、ありますか？"},
+  {theme:3,label:"テーマ3",title:"静かでいることが強さになる日",intro:"声を荒げなくても、激しく主張しなくても——静けさの中にある、揺るがない芯の話。",points:["「静かさ」が弱さでなく選択であるという視点","感情的にならないことの技術と意志","静かに存在することの美しさと影響力"],q:"静かに強くいられると感じる瞬間はどんなときですか？"},
+  {theme:3,label:"テーマ3",title:"眠れない夜の、頭の中の整理",intro:"眠れないのは弱いのではなく、考えすぎているだけかもしれない——夜の頭を少しだけ静かにする言葉。",points:["夜に思考がループする仕組みと対処の考え方","「解決しなくていい問題」と「今夜考えるべき問題」の分け方","眠れない夜を過ごすための小さな儀式"],q:"眠れない夜、頭に浮かぶのはどんなことが多いですか？"},
+  {theme:3,label:"テーマ3",title:"消えてしまいたいと思った夜の話",intro:"消えたいとは思ったことがある。でも本当に消えたかったわけじゃない——その気持ちの正体への言葉。",points:["「消えたい」という気持ちが意味することの整理","その夜を越えた先に何があったか、経験を言語化する","一人ではなく誰かに届けるための言葉として書く意味"],q:"あなたにとって、あの夜を越えられたのはなぜだと思いますか？"},
+  {theme:3,label:"テーマ3",title:"また明日があると思えた瞬間",intro:"今日が終わってよかった、と思いながら、でも明日も来ていい、と感じた夜のことを書いておきたい。",points:["「また明日」と思える小さなきっかけの正体","絶望と希望が同時にある状態のリアルな描写","眠ることが一種のリセットであるという感覚"],q:"「また明日があればいい」と思えたのはどんな瞬間でしたか？"},
+  {theme:3,label:"テーマ3",title:"誰にも言えない夢を持っている",intro:"大きすぎて恥ずかしい夢がある。笑われそうで、誰にも言えないでいる——その夢を大切にする言葉。",points:["夢を言えない理由（批判への恐れ・自己不信）","「恥ずかしい夢」ほど本物である可能性","言葉にしないまま抱えることの意味と価値"],q:"誰にも言えない夢や願望がありますか？"},
+  {theme:3,label:"テーマ3",title:"孤独は悪いことじゃないかもしれない",intro:"一人でいることが寂しいのか、それとも必要なのか——夜の孤独を責めなくていいという、静かな言葉。",points:["「孤独」と「孤立」の違いとその重要性","一人の時間が人を育てる側面への着目","孤独を愛せる人の持つ内側の豊かさ"],q:"一人の時間は、あなたにとってどんな意味を持ちますか？"},
+  {theme:3,label:"テーマ3",title:"深夜にだけ読み返すメモがある",intro:"昼間の自分には見せられない、夜中に書いたメモがある——そういう言葉をそっと持っていることの話。",points:["深夜の言葉が持つ純度と正直さ","日常の中に「自分だけの記録」を持つ意味","書くことが感情の整理になる理由"],q:"深夜にこっそり書いた言葉や日記はありますか？"},
+  {theme:3,label:"テーマ3",title:"夜に読みたくなる言葉はどこが違う",intro:"昼間の言葉は情報になるのに、夜の言葉は沁みる——その違いはどこから来るのかを考えてみた記事。",points:["夜の感受性が高まる理由（副交感神経・無防備さ）","夜に読まれる言葉の文体と温度の特徴","夜の読者に届く書き方の意識"],q:"夜に読んでよかったと思う本や文章はありますか？"},
+  {theme:3,label:"テーマ3",title:"昨日の自分を責めない練習",intro:"寝る前に今日の失敗を思い出してしまう——それでも、昨日の自分に優しくいられる練習の話。",points:["就寝前の反省ループが睡眠の質を下げる仕組み","「責める」より「観察する」への意識転換","今日を振り返る健康的な一行日記のやり方"],q:"昨日の自分を責めずにいられたことはありますか？"},
+  {theme:3,label:"テーマ3",title:"誰かの言葉に救われた経験",intro:"本でも、SNSでも、誰かのつぶやきでもよかった——あの言葉に出会っていなかったら、と今でも思う。",points:["言葉との偶然の出会いが起こる場所と状態","「救われた」と感じる言葉に共通しているもの","自分の言葉も誰かを救えるかもしれないという視点"],q:"あなたが救われた言葉があれば、教えてください。"},
+  {theme:3,label:"テーマ3",title:"夜明け前が一番暗い、という話",intro:"もうダメかもしれないと思った夜が、振り返ると転換点だったことがある——その感覚を言葉にした記事。",points:["危機の直前が最も辛く感じる心理的理由","暗闇の中で「これが底だ」と気づく瞬間","あの夜があったから、という意味付けの力"],q:"あなたにとって「夜明け前の暗さ」を経験した時期はありましたか？"},
+  {theme:3,label:"テーマ3",title:"完璧な夜なんてなくていい",intro:"今夜も何かを引きずったまま眠る——それでもいい、という許可を自分に出すための言葉。",points:["「今日はよくやった」ではなく「今日も生きた」でいい理由","完璧に終わらなかった日を丸ごと受け入れる発想","眠る前の一つの小さな肯定の言葉を探す習慣"],q:"今夜の自分に、一言かけるとしたら何と言いますか？"},
+  {theme:3,label:"テーマ3",title:"本当のことは夜に書ける",intro:"昼間は書けないことが、夜だと書ける——noteを夜に書く理由を、書き手の視点から正直に言葉にしてみた。",points:["夜に創作が進む理由（評価からの解放・無防備さ）","日中書けないリアルな感情を夜に言語化するプロセス","「夜の文章」が読者に届く理由の考察"],q:"夜にだけ書ける言葉、あなたにもありますか？"},
+  {theme:3,label:"テーマ3",title:"静かに泣ける場所を持っている",intro:"声を出して泣くのではなく、ただ静かに涙が流れる場所がある——そういう場所の話をしたい。",points:["「静かに泣く」という行為の心理的意味","泣ける場所や状況が人によってこんなに違うこと","泣くことが感情のデトックスになるという観点"],q:"あなたにとって、静かに泣ける場所や時間はどこですか？"},
+  {theme:3,label:"テーマ3",title:"弱くても、今夜も息をしている",intro:"強くなくていい。完璧じゃなくていい。それでも今夜、ここにいる——そのことへの静かな言葉。",points:["「生きていること」そのものへの肯定","弱さを認めながら前を向くという矛盾の美しさ","夜を越えることの小さくて大きな意味"],q:"今夜の自分を、どんな言葉で迎えてあげたいですか？"},
+];
+
+let currentTheme = 'all';
+let lastIndex = -1;
+
+function selectTheme(el) {
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentTheme = el.dataset.theme;
+  document.getElementById('resultArea').innerHTML = '<div class="empty-state"><div class="empty-moon">🌙</div><p class="empty-text">ボタンを押すと<br>記事ネタがひとつ届きます</p></div>';
+  document.getElementById('counter').textContent = '';
+}
+
+function shuffle() {
+  const pool = currentTheme === 'all' ? DATA : DATA.filter(d => d.theme === parseInt(currentTheme));
+  if (!pool.length) return;
+
+  let idx;
+  do { idx = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && idx === lastIndex);
+  lastIndex = idx;
+  const item = pool[idx];
+
+  const tClass = 't' + item.theme;
+  const html = `
+    <div class="result-card ${tClass}">
+      <span class="result-theme-badge">${item.label}</span>
+      <p class="result-title">${item.title}</p>
+      <div class="result-divider"></div>
+      <p class="result-section-label">— 導入文</p>
+      <p class="result-intro">${item.intro}</p>
+      <p class="result-section-label">— 書くべきポイント</p>
+      <ul class="result-points">
+        ${item.points.map(p => `<li>${p}</li>`).join('')}
+      </ul>
+      <p class="result-section-label">— 読者への問いかけ</p>
+      <p class="result-question">${item.q}</p>
+    </div>`;
+
+  const area = document.getElementById('resultArea');
+  area.innerHTML = html;
+
+  const num = pool.length;
+  const themeLabel = currentTheme === 'all' ? '全48本' : `テーマ${currentTheme}・16本`;
+  document.getElementById('counter').textContent = `${themeLabel} からランダム表示`;
+}
+</script>
+</body>
+</html>
